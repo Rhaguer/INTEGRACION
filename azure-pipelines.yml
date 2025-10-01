@@ -2,7 +2,8 @@ trigger:
 - main
 
 variables:
-  azureSubscription: 'github.com_Rhaguer'      # Nombre exacto de tu conexión de servicio en Azure DevOps (sin <>)
+  azureSubscription: 'azureSubscription: MiConexionAzureRM
+'      # Nombre exacto de tu conexión de servicio en Azure DevOps (sin <>)
   appName: 'mi-funcion-feriados'               # Nombre de tu Azure Function App en Azure Portal
   vmImageName: 'ubuntu-latest'
   feriadosApiUrl: 'https://mi-funcion-feriados.azurewebsites.net/api/CheckDate'  # URL pública de tu Azure Function
