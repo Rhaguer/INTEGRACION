@@ -2,10 +2,10 @@ trigger:
 - main
 
 variables:
-  azureSubscription: '<Tu conexión de servicio Azure>'
-  appName: '<Nombre Azure Function App>'
+  azureSubscription: 'github.com_Rhaguer'      # Nombre exacto de tu conexión de servicio en Azure DevOps (sin <>)
+  appName: 'mi-funcion-feriados'               # Nombre de tu Azure Function App en Azure Portal
   vmImageName: 'ubuntu-latest'
-  feriadosApiUrl: 'https://<tu_azure_function_url>/api/CheckDate'
+  feriadosApiUrl: 'https://mi-funcion-feriados.azurewebsites.net/api/CheckDate'  # URL pública de tu Azure Function
 
 pool:
   vmImage: $(vmImageName)
@@ -42,7 +42,6 @@ steps:
     package: '$(Build.ArtifactStagingDirectory)/functionapp.zip'
     deploymentMethod: 'auto'
 
-# Paso para validar si un día es feriado consultando la API desplegada
 - script: |
     sprintDate=$(date +'%Y-%m-%d')
     response=$(curl -s "$(feriadosApiUrl)?date=$sprintDate")
