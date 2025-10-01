@@ -2,11 +2,11 @@ trigger:
 - main
 
 variables:
-  azureSubscription: 'azureSubscription: MiConexionAzureRM
-'      # Nombre exacto de tu conexión de servicio en Azure DevOps (sin <>)
-  appName: 'mi-funcion-feriados'               # Nombre de tu Azure Function App en Azure Portal
+  azureSubscription: 'MiConexionAzureRM'
+  appName: 'mi-funcion-feriados'
   vmImageName: 'ubuntu-latest'
-  feriadosApiUrl: 'https://mi-funcion-feriados.azurewebsites.net/api/CheckDate'  # URL pública de tu Azure Function
+  feriadosApiUrl: 'https://mi-funcion-feriados.azurewebsites.net/api/CheckDate'
+  packagePath: '$(Build.ArtifactStagingDirectory)/functionapp.zip'
 
 pool:
   vmImage: $(vmImageName)
@@ -25,23 +25,24 @@ steps:
   inputs:
     rootFolderOrFile: '$(System.DefaultWorkingDirectory)'
     includeRootFolder: false
-    archiveFile: '$(Build.ArtifactStagingDirectory)/functionapp.zip'
+    archiveFile: '$(packagePath)'
     replaceExistingArchive: true
   displayName: 'Crear paquete'
 
 - task: PublishBuildArtifacts@1
   inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)/functionapp.zip'
+    PathtoPublish: '$(packagePath)'
     artifactName: 'drop'
   displayName: 'Publicar artefactos'
 
 - task: AzureFunctionApp@2
   inputs:
-    azureSubscription: $(azureSubscription)
+    azureSubscription: '$(azureSubscription)'
     appType: functionAppLinux
-    appName: $(appName)
-    package: '$(Build.ArtifactStagingDirectory)/functionapp.zip'
+    appName: '$(appName)'
+    package: '$(packagePath)'
     deploymentMethod: 'auto'
+  displayName: 'Desplegar Azure Function'
 
 - script: |
     sprintDate=$(date +'%Y-%m-%d')
@@ -50,7 +51,7 @@ steps:
   displayName: 'Validar feriado a través del API'
 
 - script: |
-    if [ "$(esFeriado)" = "true" ]; then
+    if [ "$esFeriado" = "true" ]; then
       echo "Es feriado, deteniendo pipeline"
       exit 1
     else
