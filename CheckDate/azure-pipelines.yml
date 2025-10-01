@@ -1,0 +1,59 @@
+trigger:
+- main
+
+variables:
+  azureSubscription: '<Tu conexión de servicio Azure>'
+  appName: '<Nombre Azure Function App>'
+  vmImageName: 'ubuntu-latest'
+  feriadosApiUrl: 'https://<tu_azure_function_url>/api/CheckDate'
+
+pool:
+  vmImage: $(vmImageName)
+
+steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '3.9'
+
+- script: |
+    python -m pip install --upgrade pip
+    pip install -r requirements.txt
+  displayName: 'Instalar dependencias'
+
+- task: ArchiveFiles@2
+  inputs:
+    rootFolderOrFile: '$(System.DefaultWorkingDirectory)'
+    includeRootFolder: false
+    archiveFile: '$(Build.ArtifactStagingDirectory)/functionapp.zip'
+    replaceExistingArchive: true
+  displayName: 'Crear paquete'
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/functionapp.zip'
+    artifactName: 'drop'
+  displayName: 'Publicar artefactos'
+
+- task: AzureFunctionApp@2
+  inputs:
+    azureSubscription: $(azureSubscription)
+    appType: functionAppLinux
+    appName: $(appName)
+    package: '$(Build.ArtifactStagingDirectory)/functionapp.zip'
+    deploymentMethod: 'auto'
+
+# Paso para validar si un día es feriado consultando la API desplegada
+- script: |
+    sprintDate=$(date +'%Y-%m-%d')
+    response=$(curl -s "$(feriadosApiUrl)?date=$sprintDate")
+    echo "##vso[task.setvariable variable=esFeriado]$response"
+  displayName: 'Validar feriado a través del API'
+
+- script: |
+    if [ "$(esFeriado)" = "true" ]; then
+      echo "Es feriado, deteniendo pipeline"
+      exit 1
+    else
+      echo "No es feriado, continua pipeline"
+    fi
+  displayName: 'Evaluar y bloquear si es feriado'
